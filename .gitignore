@@ -1,0 +1,10 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Python cache from skill scripts
+__pycache__/
+*.pyc
+
+# Node (if a build tool is ever added)
+node_modules/

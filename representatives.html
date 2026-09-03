@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نمایندگان استان | برند شما</title>
+<meta name="description" content="فهرست نمایندگان فعال به تفکیک استان.">
+<meta name="theme-color" content="#fbfbfe">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/style.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%234338ea'/%3E%3Cpath d='M7 12l3.5 3.5L17 8' stroke='white' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+  .stub-hero { padding-block: calc(var(--header-h) + var(--sp-16)) var(--sp-16); text-align: center; }
+  .stub-hero .province-name { color: var(--brand-700); }
+  .stub-card {
+    max-width: 640px; margin-inline: auto; background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: var(--sp-10); box-shadow: var(--shadow-md); text-align: center;
+  }
+  .stub-card svg { width: 56px; height: 56px; color: var(--brand-500); margin-inline: auto var(--sp-5); }
+  .stub-card h2 { font-size: var(--fs-lg); font-weight: 800; margin-bottom: var(--sp-3); color: var(--ink-950); }
+  .stub-card p { color: var(--ink-600); margin-bottom: var(--sp-8); }
+  .stub-actions { display: flex; gap: var(--sp-3); justify-content: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<a href="#main" class="skip-link">رفتن به محتوای اصلی</a>
+
+<header class="site-header">
+  <div class="container">
+    <a href="index.html" class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M12 2 3 7v6c0 5 4 8.5 9 9 5-.5 9-4 9-9V7l-9-5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      برند شما
+    </a>
+    <nav class="main-nav" id="mainNav" aria-label="منوی اصلی">
+      <ul>
+        <li><a href="index.html#hero">خانه</a></li>
+        <li><a href="index.html#map">نقشه نمایندگی‌ها</a></li>
+        <li><a href="index.html#apply">ثبت‌نام نمایندگی</a></li>
+      </ul>
+    </nav>
+    <div class="header-cta">
+      <a href="index.html#apply" class="btn btn-primary" aria-label="درخواست نمایندگی">
+        <span>درخواست نمایندگی</span>
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5l7 7-7 7M21 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <button class="nav-toggle" aria-label="باز و بسته کردن منو" aria-expanded="false" aria-controls="mainNav"><span></span></button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+  <section class="stub-hero">
+    <div class="container">
+      <div class="stub-card">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+        <h2>نمایندگان استان <span class="province-name" id="provinceName">—</span></h2>
+        <p id="provinceMsg">این صفحه محل نمایش فهرست نمایندگان همین استان است. برای اتصال به داده واقعی، این بخش را به API یا CMS خود متصل کنید.</p>
+        <div class="stub-actions">
+          <a href="index.html#map" class="btn btn-ghost">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5l7 7-7 7M21 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>بازگشت به نقشه</span>
+          </a>
+          <a href="index.html#apply" class="btn btn-primary">
+            <span>ثبت‌نام به‌عنوان نماینده این استان</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-bottom" style="border-top:0">
+      <span>© <span id="year"></span> برند شما. تمامی حقوق محفوظ است.</span>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/js/provinces-data.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var params = new URLSearchParams(window.location.search);
+    var slug = params.get("province");
+    var info = (window.PROVINCES_DATA || []).find(function (p) { return p.slug === slug; });
+    var nameEl = document.getElementById("provinceName");
+    var msgEl = document.getElementById("provinceMsg");
+    if (info) {
+      nameEl.textContent = info.fa;
+      msgEl.textContent = info.hasRep
+        ? "در حال حاضر " + info.count + " نماینده فعال در استان " + info.fa + " مشغول به فعالیت است. فهرست کامل به‌زودی از طریق این صفحه در دسترس قرار می‌گیرد."
+        : "هنوز نماینده‌ای در استان " + info.fa + " ثبت نشده — می‌توانید اولین نماینده این استان باشید.";
+    } else {
+      nameEl.textContent = "نامشخص";
+    }
+    var yearEl = document.getElementById("year");
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+    var toggle = document.querySelector(".nav-toggle");
+    var nav = document.querySelector(".main-nav");
+    if (toggle && nav) {
+      toggle.addEventListener("click", function () {
+        var open = toggle.getAttribute("aria-expanded") === "true";
+        toggle.setAttribute("aria-expanded", String(!open));
+        nav.classList.toggle("is-open", !open);
+      });
+    }
+  });
+</script>
+</body>
+</html>
