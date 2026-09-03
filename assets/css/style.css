@@ -82,6 +82,11 @@
 /* ---------- 2. Reset ----------------------------------------------------- */
 *, *::before, *::after { box-sizing: border-box; }
 html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 12px); }
+/* Without this, any element that also sets its own `display` (flex/grid
+   cards, toolbars, …) silently wins over the UA default for [hidden] —
+   author rules beat user-agent ones at equal specificity — so toggling
+   `el.hidden` from JS stops actually hiding it. Keep [hidden] absolute. */
+[hidden] { display: none !important; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -621,7 +626,107 @@ input, select, textarea { font: inherit; color: inherit; }
 .to-top svg { width: 20px; height: 20px; }
 
 /* =========================================================================
-   15. Responsive
+   15. Representatives listing page (representatives.html)
+   ========================================================================= */
+.reps-hero {
+  position: relative; padding-block: calc(var(--header-h) + var(--sp-12)) var(--sp-16);
+  background: linear-gradient(180deg, var(--brand-50), var(--bg) 70%);
+  overflow: clip;
+}
+.breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); font-size: var(--fs-xs); color: var(--ink-500); margin-bottom: var(--sp-6); }
+.breadcrumb a { color: var(--ink-500); transition: color var(--dur-fast); }
+.breadcrumb a:hover { color: var(--brand-700); }
+.breadcrumb .sep { width: 14px; height: 14px; color: var(--ink-300); flex: none; }
+.breadcrumb .current { color: var(--ink-900); font-weight: 700; }
+
+.reps-hero-top { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-8); flex-wrap: wrap; }
+.reps-title-row { display: flex; align-items: center; gap: var(--sp-4); }
+.reps-title-row .province-pin {
+  width: 56px; height: 56px; border-radius: var(--radius-md); flex: none; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--brand-500), var(--brand-900)); color: #fff; box-shadow: var(--shadow-md);
+}
+.reps-title-row .province-pin svg { width: 28px; height: 28px; }
+.reps-title h1 { font-size: clamp(1.5rem, 1.1rem + 1.6vw, var(--fs-2xl)); font-weight: 800; color: var(--ink-950); }
+.reps-title p { color: var(--ink-600); font-size: var(--fs-sm); margin-top: 2px; }
+
+.reps-stats { display: flex; gap: var(--sp-4); flex-wrap: wrap; }
+.reps-stat-chip {
+  display: flex; align-items: center; gap: var(--sp-3); background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-md); padding: var(--sp-3) var(--sp-5); box-shadow: var(--shadow-sm);
+}
+.reps-stat-chip svg { width: 20px; height: 20px; color: var(--brand-600); flex: none; }
+.reps-stat-chip b { display: block; font-size: var(--fs-md); font-weight: 800; color: var(--ink-950); font-variant-numeric: tabular-nums; }
+.reps-stat-chip span { font-size: var(--fs-xs); color: var(--ink-500); }
+
+/* Toolbar: search + filters */
+.reps-toolbar {
+  display: flex; gap: var(--sp-3); flex-wrap: wrap; margin-top: var(--sp-8);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md);
+  padding: var(--sp-3); box-shadow: var(--shadow-sm);
+}
+.reps-search { position: relative; flex: 1 1 240px; }
+.reps-search svg {
+  position: absolute; inset-inline-start: var(--sp-4); top: 50%; translate: 0 -50%;
+  width: 18px; height: 18px; color: var(--ink-500); pointer-events: none;
+}
+.reps-search input {
+  width: 100%; border: 1.5px solid transparent; background: var(--surface-alt); border-radius: var(--radius-sm);
+  padding: var(--sp-3) var(--sp-4); padding-inline-start: calc(var(--sp-4) * 2 + 18px);
+  font-size: var(--fs-sm); min-height: 48px; transition: border-color var(--dur-fast), background-color var(--dur-fast);
+}
+.reps-search input:focus { outline: none; border-color: var(--brand-500); background: var(--surface); box-shadow: 0 0 0 4px var(--brand-50); }
+.reps-toolbar select {
+  flex: 1 1 170px; border: 1.5px solid transparent; background: var(--surface-alt); border-radius: var(--radius-sm);
+  padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); min-height: 48px; color: var(--ink-800);
+  transition: border-color var(--dur-fast);
+}
+.reps-toolbar select:focus { outline: none; border-color: var(--brand-500); }
+
+/* Grid + cards */
+.reps-results-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-6); flex-wrap: wrap; }
+.reps-results-bar p { color: var(--ink-600); font-size: var(--fs-sm); }
+.reps-results-bar b { color: var(--ink-950); font-variant-numeric: tabular-nums; }
+.reps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-6); }
+
+.rep-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  padding: var(--sp-6); box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: var(--sp-4);
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), border-color var(--dur-base);
+}
+.rep-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); border-color: var(--brand-100); }
+.rep-card-head { display: flex; align-items: center; gap: var(--sp-3); }
+.rep-avatar {
+  width: 52px; height: 52px; border-radius: 50%; flex: none; display: grid; place-items: center;
+  font-weight: 700; font-size: var(--fs-md); color: #fff; background: linear-gradient(135deg, var(--brand-500), var(--glow-violet));
+}
+.rep-card-head h3 { font-size: var(--fs-md); font-weight: 700; color: var(--ink-950); }
+.rep-badge {
+  display: inline-flex; align-items: center; margin-top: 4px; font-size: var(--fs-xs); font-weight: 600;
+  color: var(--brand-700); background: var(--brand-50); border: 1px solid var(--brand-100);
+  padding: 2px var(--sp-3); border-radius: var(--radius-pill);
+}
+.rep-meta { display: flex; flex-direction: column; gap: var(--sp-2); }
+.rep-meta li { display: flex; align-items: flex-start; gap: var(--sp-2); font-size: var(--fs-sm); color: var(--ink-600); }
+.rep-meta svg { width: 16px; height: 16px; flex: none; color: var(--ink-400, var(--ink-500)); margin-top: 2px; }
+.rep-actions { display: flex; gap: var(--sp-3); margin-top: auto; padding-top: var(--sp-2); }
+.rep-actions .btn { flex: 1; padding-block: var(--sp-3); font-size: var(--fs-xs); }
+
+/* Empty / no-match states */
+.reps-empty {
+  max-width: 560px; margin-inline: auto; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: var(--sp-10); text-align: center; box-shadow: var(--shadow-md);
+}
+.reps-empty .reps-empty-icon {
+  width: 64px; height: 64px; border-radius: 50%; margin-inline: auto var(--sp-5); display: grid; place-items: center;
+  background: var(--brand-50); color: var(--brand-600);
+}
+.reps-empty .reps-empty-icon svg { width: 30px; height: 30px; }
+.reps-empty h2 { font-size: var(--fs-lg); font-weight: 800; color: var(--ink-950); margin-bottom: var(--sp-3); }
+.reps-empty p { color: var(--ink-600); margin-bottom: var(--sp-8); }
+.reps-empty .btn-row { display: flex; gap: var(--sp-3); justify-content: center; flex-wrap: wrap; }
+
+/* =========================================================================
+   16. Responsive
    ========================================================================= */
 @media (max-width: 1080px) {
   .footer-top { grid-template-columns: 1fr 1fr; }
@@ -656,6 +761,10 @@ input, select, textarea { font: inherit; color: inherit; }
   .process-list::before { display: none; }
   .field-grid { grid-template-columns: 1fr; }
   .review-summary { grid-template-columns: 1fr; }
+
+  .reps-hero-top { flex-direction: column; align-items: flex-start; }
+  .reps-stats { width: 100%; }
+  .reps-stat-chip { flex: 1; }
 }
 
 @media (max-width: 720px) {
@@ -665,6 +774,9 @@ input, select, textarea { font: inherit; color: inherit; }
   .process-list { grid-template-columns: 1fr; }
   .cta-banner { padding: var(--sp-10) var(--sp-5); }
   :root { --header-h: 68px; }
+
+  .reps-grid { grid-template-columns: 1fr; }
+  .reps-toolbar select { flex-basis: 100%; }
 }
 
 @media (max-width: 480px) {
