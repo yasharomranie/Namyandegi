@@ -363,7 +363,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .map-tooltip .tt-link {
   display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-xs); font-weight: 700;
   color: var(--ink-950); background: #fff; padding: var(--sp-2) var(--sp-4); border-radius: var(--radius-pill);
-  width: 100%; justify-content: center; transition: transform var(--dur-fast) var(--ease-out);
+  width: 100%; justify-content: center; min-height: 40px; transition: transform var(--dur-fast) var(--ease-out);
 }
 .map-tooltip.state-empty .tt-link { background: var(--accent-500); color: var(--ink-950); }
 .map-tooltip .tt-link:hover { transform: translateY(-1px); }

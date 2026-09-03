@@ -128,7 +128,7 @@
         paths.forEach(function (p) { p.classList.remove("is-active"); });
         path.classList.add("is-active");
         activeTooltipTarget = path;
-        showTooltip(tooltip, wrap, path, fa, count, hasRep);
+        showTooltip(tooltip, wrap, path, fa, count, hasRep, activate);
       }
       function activate() {
         if (info && info.hasRep) {
@@ -147,11 +147,36 @@
       path.addEventListener("blur", function () {
         if (activeTooltipTarget === path) hideTooltip(tooltip, path);
       });
-      path.addEventListener("click", activate);
+      // There's no hover on touch devices, so a bare "click = activate" would
+      // send a first tap straight to a fresh page/scroll with the visitor
+      // never seeing the tooltip (province name + rep count) at all. Instead:
+      // the first tap on a province opens its tooltip (same as a desktop
+      // hover); tapping it again — now that its tooltip is already showing —
+      // activates. On a mouse, "mouseenter" always fires before "click", so
+      // the tooltip is already open by the time click fires and this still
+      // resolves in a single click, no behavior change there. The tooltip's
+      // own "مشاهده نمایندگان استان" button (wired in showTooltip) is always
+      // a one-tap shortcut once it's visible, on any input type.
+      path.addEventListener("click", function () {
+        if (path.classList.contains("is-active") && tooltip.classList.contains("is-visible")) {
+          activate();
+        } else {
+          open();
+        }
+      });
       path.addEventListener("keydown", function (e) {
         if (e.key === "Enter" || e.key === " ") { e.preventDefault(); activate(); }
         if (e.key === "Escape") hideTooltip(tooltip, path);
       });
+    });
+
+    // Touch has no "mouseleave" to close an open tooltip with — tapping
+    // anywhere outside the map dismisses it instead.
+    document.addEventListener("click", function (e) {
+      if (!tooltip.classList.contains("is-visible")) return;
+      if (wrap.contains(e.target)) return;
+      paths.forEach(function (p) { p.classList.remove("is-active"); });
+      hideTooltip(tooltip);
     });
 
     var labels = addProvinceLabels(svg, window.PROVINCES_DATA || []);
@@ -232,7 +257,7 @@
     return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
   }
 
-  function showTooltip(tooltip, wrap, path, fa, count, hasRep) {
+  function showTooltip(tooltip, wrap, path, fa, count, hasRep, onActivate) {
     if (!tooltip || !wrap) return;
     var wrapBox = wrap.getBoundingClientRect();
     var pathBox = path.getBoundingClientRect();
@@ -247,11 +272,18 @@
         ? '<svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><b>' + count + "</b> نماینده فعال"
         : "هنوز نماینده‌ای در این استان نداریم") +
       "</div>" +
-      '<span class="tt-link">' +
+      // A real <button>, not a decorative <span>: on touch, this is the
+      // one-tap shortcut once the tooltip is open (see the path "click"
+      // handler in decorateMap for why a bare tap on the shape isn't enough
+      // on its own), and it's independently keyboard/screen-reader operable.
+      '<button type="button" class="tt-link">' +
       (hasRep
         ? 'مشاهده نمایندگان استان <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M14 5l7 7-7 7M21 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
         : 'اولین نماینده این استان شوید <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M14 5l7 7-7 7M21 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>') +
-      "</span>";
+      "</button>";
+
+    var link = tooltip.querySelector(".tt-link");
+    if (link && onActivate) link.onclick = onActivate;
 
     tooltip.style.left = x + "px";
     tooltip.style.top = y + "px";
