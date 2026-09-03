@@ -86,9 +86,29 @@
     var dataById = {};
     window.PROVINCES_DATA.forEach(function (p) { dataById[p.id] = p; });
 
-    fetch("assets/svg/iran-map.svg")
-      .then(function (res) { if (!res.ok) throw new Error("svg fetch failed"); return res.text(); })
-      .then(function (svgText) {
+    // Live counts from the backend (api/provinces.php) patch straight onto
+    // the shared PROVINCES_DATA objects, so decorateMap/labels/tooltips —
+    // all of which read p.count/p.hasRep off those same references — pick
+    // them up automatically. If the API isn't reachable yet (backend not
+    // deployed, offline, CORS misconfigured…) this quietly keeps whatever
+    // was already in provinces-data.js instead of breaking the map.
+    var liveCounts = fetch("api/provinces.php")
+      .then(function (res) { return res.ok ? res.json() : {}; })
+      .catch(function () { return {}; });
+
+    var svgMarkup = fetch("assets/svg/iran-map.svg")
+      .then(function (res) { if (!res.ok) throw new Error("svg fetch failed"); return res.text(); });
+
+    Promise.all([svgMarkup, liveCounts])
+      .then(function (results) {
+        var svgText = results[0];
+        var counts = results[1] || {};
+        window.PROVINCES_DATA.forEach(function (p) {
+          if (Object.prototype.hasOwnProperty.call(counts, p.slug)) {
+            p.count = counts[p.slug];
+            p.hasRep = counts[p.slug] > 0;
+          }
+        });
         mount.innerHTML = svgText;
         decorateMap(mount, dataById, tooltip, wrap);
       })
@@ -536,22 +556,40 @@
       if (!validateStep(current)) return;
 
       var submitBtn = qs("[data-submit]", form);
-      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "در حال ارسال..."; }
+      var submitBtnLabel = submitBtn ? qs("span", submitBtn) : null;
+      var errorBox = qs("#formSubmitError");
+      if (errorBox) { errorBox.hidden = true; errorBox.textContent = ""; }
+      if (submitBtn) submitBtn.disabled = true;
+      if (submitBtnLabel) submitBtnLabel.textContent = "در حال ارسال...";
 
-      // TODO(backend): replace with a real endpoint, e.g.
-      // fetch("/api/representative-applications", { method: "POST", body: new FormData(form) })
-      var payload = Object.fromEntries(new FormData(form).entries());
-      console.info("[apply-form] sample submission payload:", payload);
-
-      setTimeout(function () {
-        qs(".form-body").style.display = "none";
-        qs(".form-progress").style.display = "none";
-        var success = qs(".form-success");
-        success.classList.add("is-active");
-        // Hiding the form collapses .form-shell's height; without this the
-        // viewport would land on whatever section scrolls up to fill the gap.
-        success.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
-      }, 900);
+      fetch("api/applications.php", { method: "POST", body: new FormData(form) })
+        .then(function (res) {
+          return res.json().catch(function () { return {}; }).then(function (data) {
+            if (!res.ok || !data.ok) {
+              throw new Error(data.error || "ارسال درخواست با خطا مواجه شد. لطفاً دوباره تلاش کنید.");
+            }
+          });
+        })
+        .then(function () {
+          qs(".form-body").style.display = "none";
+          qs(".form-progress").style.display = "none";
+          var success = qs(".form-success");
+          success.classList.add("is-active");
+          // Hiding the form collapses .form-shell's height; without this the
+          // viewport would land on whatever section scrolls up to fill the gap.
+          success.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+        })
+        .catch(function (err) {
+          if (errorBox) {
+            errorBox.hidden = false;
+            errorBox.innerHTML =
+              '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5m0 3h.01M12 2 2 20h20L12 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span>';
+            errorBox.querySelector("span").textContent = err.message;
+            errorBox.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" });
+          }
+          if (submitBtn) submitBtn.disabled = false;
+          if (submitBtnLabel) submitBtnLabel.textContent = "ارسال نهایی درخواست";
+        });
     });
 
     updateProgress();

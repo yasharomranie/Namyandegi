@@ -1,0 +1,11 @@
+# Shared helpers (config/db/auth/data) are meant to be require()'d by the
+# actual endpoint scripts, never requested directly.
+<FilesMatch "^_">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>

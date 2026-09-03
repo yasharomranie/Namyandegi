@@ -8,3 +8,11 @@ __pycache__/
 
 # Node (if a build tool is ever added)
 node_modules/
+
+# Backend secrets & uploaded files — never commit real DB credentials or
+# what applicants upload. Copy api/_config.example.php to api/_config.php
+# and fill in real values (see README.md).
+/api/_config.php
+/uploads/applications/*
+!/uploads/applications/.gitkeep
+/*.local.sql

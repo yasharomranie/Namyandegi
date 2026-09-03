@@ -1,0 +1,22 @@
+# Uploaded ID/license documents live under uploads/applications/ with
+# random filenames (see api/applications.php). This directory only needs
+# to serve those files as static downloads — never execute anything in it
+# and never let anyone browse its contents.
+
+Options -Indexes
+
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<FilesMatch "\.(php|php\d?|phtml|phar)$">
+  Require all denied
+</FilesMatch>
+
+# Apache 2.4+ (Require) is covered above; this is the equivalent for older
+# 2.2-style hosts that some shared providers still run.
+<IfModule !mod_authz_core.c>
+  <FilesMatch "\.(php|php\d?|phtml|phar)$">
+    Order allow,deny
+    Deny from all
+  </FilesMatch>
+</IfModule>

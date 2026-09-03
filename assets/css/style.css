@@ -537,6 +537,13 @@ input, select, textarea { font: inherit; color: inherit; }
 .check-row label { font-size: var(--fs-sm); color: var(--ink-700); }
 .check-row a { color: var(--brand-700); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
 
+.form-submit-error {
+  display: flex; align-items: flex-start; gap: var(--sp-2); margin-top: var(--sp-4);
+  background: var(--danger-100); color: #7a1c22; border-radius: var(--radius-sm);
+  padding: var(--sp-4); font-size: var(--fs-sm); font-weight: 600;
+}
+.form-submit-error svg { width: 18px; height: 18px; flex: none; margin-top: 1px; }
+
 .review-summary { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: var(--sp-6); }
 .review-item { background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: var(--sp-4); }
 .review-item span { display: block; font-size: var(--fs-xs); color: var(--ink-500); margin-bottom: 2px; }

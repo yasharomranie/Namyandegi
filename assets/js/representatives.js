@@ -4,10 +4,11 @@
  * Renders the representatives.html listing page for the province named in
  * ?province=<slug>: header/footer chrome shared with index.html, plus the
  * search/filter toolbar and card grid built from
- * window.generateRepresentatives() (see representatives-data.js — swap
- * that generator for a real fetch() to your API before launch; this file
- * only cares that it gets an array of { name, specialty, city, address,
- * phone, phoneHref, activeSince } objects back).
+ * window.fetchRepresentatives() (see representatives-data.js — it calls
+ * api/representatives.php and falls back to sample data if that's not
+ * reachable); this file only cares that it gets a Promise resolving to an
+ * array of { name, specialty, city, address, phone, phoneHref,
+ * activeSince } objects back.
  */
 (function () {
   "use strict";
@@ -77,54 +78,64 @@
     document.title = "نمایندگان استان " + province.fa + " | برند شما";
     qs("#breadcrumbProvince").textContent = province.fa;
     qs("#provinceTitle").textContent = "نمایندگان استان " + province.fa;
+    qs("#provinceSubtitle").textContent = "در حال بارگذاری فهرست نمایندگان…";
 
-    if (!province.hasRep || !province.count) {
-      qs("#provinceSubtitle").textContent = "هنوز نماینده‌ای در استان " + province.fa + " ثبت نشده است.";
-      showOnly("repsEmptyState");
-      return;
-    }
+    // Whether this province actually has representatives is decided by
+    // what the API (or its sample-data fallback) returns, not by the
+    // static hasRep/count in provinces-data.js — those only drive the map
+    // on index.html, which patches its own live counts separately; this
+    // page always asks directly so it can't show a stale empty/non-empty
+    // state after an admin adds or removes someone.
+    if (!window.fetchRepresentatives) { showOnly("repsInvalidState"); return; }
 
-    var allReps = (window.generateRepresentatives && window.generateRepresentatives(province)) || [];
-    qs("#provinceSubtitle").textContent =
-      allReps.length + " نماینده فعال، آماده ارائه خدمات در سراسر استان " + province.fa + ".";
+    window.fetchRepresentatives(province).then(function (allReps) {
+      if (!allReps.length) {
+        qs("#provinceSubtitle").textContent = "هنوز نماینده‌ای در استان " + province.fa + " ثبت نشده است.";
+        showOnly("repsEmptyState");
+        return;
+      }
 
-    qs("#repsStats").hidden = false;
-    qs("#statCount").textContent = province.count;
-    qs("#statCity").textContent = province.capital || "—";
+      qs("#provinceSubtitle").textContent =
+        allReps.length + " نماینده فعال، آماده ارائه خدمات در سراسر استان " + province.fa + ".";
 
-    var toolbar = qs("#repsToolbar");
-    toolbar.hidden = false;
-    var searchInput = qs("#repsSearch");
-    var cityFilter = qs("#repsCityFilter");
-    var jobFilter = qs("#repsJobFilter");
+      qs("#repsStats").hidden = false;
+      qs("#statCount").textContent = allReps.length;
+      qs("#statCity").textContent = province.capital || "—";
 
-    fillSelect(cityFilter, uniqueSorted(allReps.map(function (r) { return r.city; })));
-    fillSelect(jobFilter, uniqueSorted(allReps.map(function (r) { return r.specialty; })));
+      var toolbar = qs("#repsToolbar");
+      toolbar.hidden = false;
+      var searchInput = qs("#repsSearch");
+      var cityFilter = qs("#repsCityFilter");
+      var jobFilter = qs("#repsJobFilter");
 
-    function applyFilters() {
-      var q = searchInput.value.trim().toLowerCase();
-      var city = cityFilter.value;
-      var job = jobFilter.value;
-      var filtered = allReps.filter(function (r) {
-        var matchesQuery = !q || r.name.toLowerCase().indexOf(q) !== -1 || r.city.toLowerCase().indexOf(q) !== -1;
-        var matchesCity = !city || r.city === city;
-        var matchesJob = !job || r.specialty === job;
-        return matchesQuery && matchesCity && matchesJob;
+      fillSelect(cityFilter, uniqueSorted(allReps.map(function (r) { return r.city; })));
+      fillSelect(jobFilter, uniqueSorted(allReps.map(function (r) { return r.specialty; })));
+
+      function applyFilters() {
+        var q = searchInput.value.trim().toLowerCase();
+        var city = cityFilter.value;
+        var job = jobFilter.value;
+        var filtered = allReps.filter(function (r) {
+          var matchesQuery = !q || r.name.toLowerCase().indexOf(q) !== -1 || r.city.toLowerCase().indexOf(q) !== -1;
+          var matchesCity = !city || r.city === city;
+          var matchesJob = !job || r.specialty === job;
+          return matchesQuery && matchesCity && matchesJob;
+        });
+        renderGrid(filtered, allReps.length);
+      }
+
+      searchInput.addEventListener("input", debounce(applyFilters, 150));
+      cityFilter.addEventListener("change", applyFilters);
+      jobFilter.addEventListener("change", applyFilters);
+      qs("#clearFiltersBtn").addEventListener("click", function () {
+        searchInput.value = "";
+        cityFilter.value = "";
+        jobFilter.value = "";
+        applyFilters();
       });
-      renderGrid(filtered, allReps.length);
-    }
 
-    searchInput.addEventListener("input", debounce(applyFilters, 150));
-    cityFilter.addEventListener("change", applyFilters);
-    jobFilter.addEventListener("change", applyFilters);
-    qs("#clearFiltersBtn").addEventListener("click", function () {
-      searchInput.value = "";
-      cityFilter.value = "";
-      jobFilter.value = "";
-      applyFilters();
+      renderGrid(allReps, allReps.length);
     });
-
-    renderGrid(allReps, allReps.length);
   }
 
   function showOnly(idToShow) {

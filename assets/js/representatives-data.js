@@ -1,19 +1,21 @@
 /**
  * representatives-data.js
  * -----------------------------------------------------------------------
- * Generates sample representative listings for a province, purely on the
- * client, from its `count` in provinces-data.js — there is no backend yet.
- * Swap `window.generateRepresentatives` for a real fetch() to your API
- * before launch (see the TODO in representatives.js); nothing else on the
- * page needs to change, since it already renders whatever array comes
- * back.
+ * window.fetchRepresentatives(province) is what representatives.js
+ * actually calls: it asks api/representatives.php?province=<slug> for the
+ * real, admin-managed list and resolves with whatever comes back. If that
+ * request fails — backend not deployed yet, offline, local dev without
+ * PHP running — it falls back to generateSampleRepresentatives() below so
+ * the page still has something to show instead of an empty grid.
  *
- * The generator is deterministic (seeded by province + index, not
+ * The sample generator is deterministic (seeded by province + index, not
  * Math.random()) so the same province always renders the same sample
  * list instead of reshuffling on every reload. Names are drawn from
  * common, generic Persian given/family name pools — not real people —
  * and contact details use the same placeholder pattern as the rest of
- * the site (see footer phone number in index.html).
+ * the site (see footer phone number in index.html). It's fallback/demo
+ * data only now — the real list lives in the `representatives` table
+ * (schema.sql) and is managed from admin/representatives.php.
  * -----------------------------------------------------------------------
  */
 (function () {
@@ -60,9 +62,26 @@
 
   /**
    * @param {object} province - one entry from window.PROVINCES_DATA
+   * @returns {Promise<Array<object>>} representative records for that
+   *   province, from the real API when reachable, otherwise the sample
+   *   generator.
+   */
+  window.fetchRepresentatives = function (province) {
+    if (!province) return Promise.resolve([]);
+    return fetch("api/representatives.php?province=" + encodeURIComponent(province.slug))
+      .then(function (res) { return res.ok ? res.json() : Promise.reject(new Error("bad status")); })
+      .then(function (data) { return Array.isArray(data) ? data : []; })
+      .catch(function () {
+        console.warn("[representatives] api/representatives.php not reachable — showing sample data instead");
+        return generateSampleRepresentatives(province);
+      });
+  };
+
+  /**
+   * @param {object} province - one entry from window.PROVINCES_DATA
    * @returns {Array<object>} sample representative records
    */
-  window.generateRepresentatives = function (province) {
+  function generateSampleRepresentatives(province) {
     if (!province || !province.count) return [];
     var rng = makeRng(hashString(province.id));
     var list = [];
@@ -87,5 +106,5 @@
       });
     }
     return list;
-  };
+  }
 })();
