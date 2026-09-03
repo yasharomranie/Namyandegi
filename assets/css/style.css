@@ -320,6 +320,26 @@ input, select, textarea { font: inherit; color: inherit; }
 #iranMap path[data-has-rep="false"]:hover,
 #iranMap path[data-has-rep="false"].is-active { fill: var(--accent-500); }
 
+/* Province name labels, drawn as a <g> appended after the paths so they sit
+   on top of every fill state. A white halo (stroke under the fill) keeps
+   the dark navy text legible whether it's sitting on the light "no rep"
+   gray or the brand-colored "has rep" fill. */
+#iranMap .map-labels { direction: rtl; }
+#iranMap .map-label,
+#iranMap .map-label tspan {
+  font-family: var(--font-fa);
+  font-weight: 700;
+  fill: var(--ink-900);
+  paint-order: stroke fill;
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 2.25px;
+  stroke-linejoin: round;
+  text-anchor: middle;
+  dominant-baseline: central;
+  pointer-events: none;
+  user-select: none;
+}
+
 .map-note { display: flex; align-items: center; gap: var(--sp-2); margin-top: var(--sp-4); color: var(--ink-500); font-size: var(--fs-xs); }
 .map-note svg { width: 16px; height: 16px; flex: none; color: var(--brand-600); }
 

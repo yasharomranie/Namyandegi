@@ -154,6 +154,8 @@
       });
     });
 
+    var labels = addProvinceLabels(svg, window.PROVINCES_DATA || []);
+
     // Cinematic "draw the borders" entrance
     if (hasGsap && !reduceMotion) {
       paths.forEach(function (path) {
@@ -171,7 +173,63 @@
         delay: 0.3,
       });
       window.gsap.from(paths, { opacity: 0, duration: 1.1, stagger: 0.01, ease: "power1.out", delay: 0.3 });
+      if (labels.length) {
+        window.gsap.from(labels, { opacity: 0, duration: 0.8, stagger: 0.01, ease: "power1.out", delay: 1.0 });
+      }
     }
+  }
+
+  /**
+   * Draws the Persian province name on top of each shape, anchored at the
+   * precomputed `cx/cy` ("pole of inaccessibility" — the point inside the
+   * polygon farthest from any border, see provinces-data.js) rather than a
+   * bounding-box center, which for thin/concave provinces (Tehran, Semnan,
+   * Gilan…) can land outside the shape entirely. Font size scales with `r`
+   * (that point's distance to the nearest edge) so small provinces get
+   * small labels instead of overflowing their neighbors. Long two-word-plus
+   * names ("چهارمحال و بختیاری") wrap onto a second line.
+   */
+  function addProvinceLabels(svg, provincesData) {
+    var NS = "http://www.w3.org/2000/svg";
+    var group = document.createElementNS(NS, "g");
+    group.setAttribute("class", "map-labels");
+    group.setAttribute("aria-hidden", "true"); // paths already carry the accessible name
+
+    var nodes = [];
+    provincesData.forEach(function (info) {
+      if (typeof info.cx !== "number" || typeof info.cy !== "number") return;
+      var lines = splitProvinceLabel(info.fa);
+      var size = Math.max(7, Math.min(13, info.r * 0.6));
+      var lineH = size * 1.15;
+      var startY = info.cy - ((lines.length - 1) * lineH) / 2;
+
+      var text = document.createElementNS(NS, "text");
+      text.setAttribute("class", "map-label");
+      text.setAttribute("font-size", size.toFixed(2));
+
+      lines.forEach(function (line, i) {
+        var tspan = document.createElementNS(NS, "tspan");
+        tspan.setAttribute("x", info.cx);
+        tspan.setAttribute("y", (startY + i * lineH).toFixed(2));
+        tspan.textContent = line;
+        text.appendChild(tspan);
+      });
+
+      group.appendChild(text);
+      nodes.push(text);
+    });
+
+    svg.appendChild(group); // painted last => sits above the province fills
+    return nodes;
+  }
+
+  function splitProvinceLabel(name) {
+    var words = name.split(" ");
+    if (words.length <= 2) return words;
+    // "X و Y" (e.g. چهارمحال و بختیاری) reads better as "X" / "و Y"
+    if (words.length === 3 && words[1] === "و") return [words[0], words[1] + " " + words[2]];
+    var mid = Math.ceil(words.length / 2);
+    return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
   }
 
   function showTooltip(tooltip, wrap, path, fa, count, hasRep) {
