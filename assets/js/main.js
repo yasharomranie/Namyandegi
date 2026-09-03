@@ -109,6 +109,31 @@
     var paths = qsa("path", svg);
     var activeTooltipTarget = null;
 
+    // Once a tooltip opens (over/near the just-tapped province), it visually
+    // covers roughly the same spot — so a second tap aimed at "that same
+    // spot" lands on the tooltip card itself, not the path underneath it.
+    // Make the whole open tooltip activate on tap/click, not just its CTA
+    // button, so that second tap actually does something. Bound once here;
+    // showTooltip() below just updates which callback it currently points
+    // at. pointerup (not click) for the touch case, same reasoning as the
+    // per-path listeners; click covers mouse and keyboard-Enter-on-button.
+    tooltip.addEventListener("pointerup", function (e) {
+      if (e.pointerType && e.pointerType !== "mouse" && tooltip._activate) tooltip._activate();
+    });
+    // A tap's real "click" isn't dropped, only *delayed*: browsers replay it
+    // as a compatibility mouse event at the original touch coordinates some
+    // tens of ms later, and by then the tooltip this same tap just opened is
+    // sitting at that exact spot — so it lands here and fires "click"
+    // immediately after "pointerup" already opened it, undoing the tap
+    // gating in the per-path listener below. The path's pointerup handler
+    // stamps `tooltip._suppressClickUntil` right before a touch-triggered
+    // open() (never for a mouse-triggered one) so this listener can ignore
+    // exactly that echo without adding any delay to a real mouse click.
+    tooltip.addEventListener("click", function () {
+      if (Date.now() < (tooltip._suppressClickUntil || 0)) return;
+      if (tooltip._activate) tooltip._activate();
+    });
+
     paths.forEach(function (path) {
       var id = path.getAttribute("id");
       var info = dataById[id];
@@ -139,29 +164,62 @@
         }
       }
 
-      path.addEventListener("mouseenter", open);
-      path.addEventListener("focus", open);
-      path.addEventListener("mouseleave", function () {
-        if (activeTooltipTarget === path) hideTooltip(tooltip, path);
+      // Pointer Events, not "click": on touch, the browser fires a real
+      // 'click' too, but only ~afterward, as a compatibility event replayed
+      // at the *original* touch coordinates — and by then open() below has
+      // already shown a tooltip that now covers that same spot, so the
+      // delayed click lands on the tooltip instead of the path and fires
+      // its "activate" handler immediately, undoing the very gating this
+      // is meant to add. preventDefault() on pointerdown suppresses that
+      // compatibility click at the source (spec-guaranteed: canceling
+      // pointerdown cancels the mousedown/mouseup/click chain it would
+      // otherwise replay), so "pointerup" is the only thing driving this,
+      // for mouse, touch, and pen alike.
+      //
+      // pointerType tells the two input styles apart, because they need
+      // different gating:
+      //  - mouse: "pointerenter" (real hover) always fires before
+      //    "pointerup", so by the time pointerup runs the tooltip is
+      //    already open — a single click still resolves in one step.
+      //  - touch/pen: enter and press happen together as one gesture, so
+      //    if pointerenter were also allowed to open() here, is-active
+      //    would already be true the instant pointerup runs and every tap
+      //    would activate immediately — the exact bug being fixed. So
+      //    pointerenter is a no-op for touch, and the *first* pointerup on
+      //    a province opens its tooltip; only a second pointerup on that
+      //    same, already-open province activates it. The tooltip's own
+      //    "مشاهده نمایندگان استان" button (wired in showTooltip) is always
+      //    a one-tap shortcut once it's visible, on any input type.
+      path.addEventListener("pointerenter", function (e) {
+        if (e.pointerType === "mouse") open();
+      });
+      path.addEventListener("pointerleave", function (e) {
+        if (e.pointerType === "mouse" && activeTooltipTarget === path) hideTooltip(tooltip, path);
+      });
+      // Tapping/clicking a focusable element also focuses it, not just
+      // keyboard Tab — so an unconditional "focus" listener would open()
+      // a second time (for touch, effectively immediately, since focus
+      // lands before pointerup), setting is-active early and making the
+      // pointerup gate above see an "already open" province on the very
+      // first tap. :focus-visible is true for real keyboard focus and
+      // false for pointer-caused focus in evergreen browsers, so this
+      // keeps the keyboard path working without racing the pointer path.
+      path.addEventListener("focus", function () {
+        if (path.matches(":focus-visible")) open();
       });
       path.addEventListener("blur", function () {
         if (activeTooltipTarget === path) hideTooltip(tooltip, path);
       });
-      // There's no hover on touch devices, so a bare "click = activate" would
-      // send a first tap straight to a fresh page/scroll with the visitor
-      // never seeing the tooltip (province name + rep count) at all. Instead:
-      // the first tap on a province opens its tooltip (same as a desktop
-      // hover); tapping it again — now that its tooltip is already showing —
-      // activates. On a mouse, "mouseenter" always fires before "click", so
-      // the tooltip is already open by the time click fires and this still
-      // resolves in a single click, no behavior change there. The tooltip's
-      // own "مشاهده نمایندگان استان" button (wired in showTooltip) is always
-      // a one-tap shortcut once it's visible, on any input type.
-      path.addEventListener("click", function () {
-        if (path.classList.contains("is-active") && tooltip.classList.contains("is-visible")) {
-          activate();
+      path.addEventListener("pointerup", function (e) {
+        if (e.pointerType && e.pointerType !== "mouse") {
+          if (path.classList.contains("is-active") && tooltip.classList.contains("is-visible")) {
+            activate();
+          } else {
+            tooltip._suppressClickUntil = Date.now() + 500; // see the tooltip "click" listener above
+            open();
+          }
         } else {
-          open();
+          activate();
         }
       });
       path.addEventListener("keydown", function (e) {
@@ -171,8 +229,10 @@
     });
 
     // Touch has no "mouseleave" to close an open tooltip with — tapping
-    // anywhere outside the map dismisses it instead.
-    document.addEventListener("click", function (e) {
+    // anywhere outside the map dismisses it instead. pointerdown (not
+    // click) for the same "don't depend on synthesized events" reason as
+    // above.
+    document.addEventListener("pointerdown", function (e) {
       if (!tooltip.classList.contains("is-visible")) return;
       if (wrap.contains(e.target)) return;
       paths.forEach(function (p) { p.classList.remove("is-active"); });
@@ -282,8 +342,10 @@
         : 'اولین نماینده این استان شوید <svg viewBox="0 0 24 24" fill="none" width="14" height="14"><path d="M14 5l7 7-7 7M21 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>') +
       "</button>";
 
-    var link = tooltip.querySelector(".tt-link");
-    if (link && onActivate) link.onclick = onActivate;
+    // Read by the tooltip-level pointerup/click listeners registered once in
+    // decorateMap — covers a tap anywhere on the open card, not just the
+    // button (see the comment there for why that matters on touch).
+    tooltip._activate = onActivate;
 
     tooltip.style.left = x + "px";
     tooltip.style.top = y + "px";

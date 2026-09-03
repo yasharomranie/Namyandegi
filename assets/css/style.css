@@ -310,6 +310,9 @@ input, select, textarea { font: inherit; color: inherit; }
   stroke: var(--surface);
   stroke-width: 1.4;
   cursor: pointer;
+  /* Skip the double-tap-to-zoom delay so a tap's pointerup fires promptly;
+     panning/scrolling through the map is still allowed (unlike touch-action: none). */
+  touch-action: manipulation;
   transition: fill var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
   transform-box: fill-box; transform-origin: center;
 }
