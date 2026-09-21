@@ -371,11 +371,11 @@ input, select, textarea { font: inherit; color: inherit; }
 #iranMap .map-pins { pointer-events: none; }
 #iranMap .map-pin { transform-box: fill-box; transform-origin: center; }
 #iranMap .map-pin-head {
-  fill: var(--brand-600);
+  fill: var(--danger-500);
   stroke: #fff;
   stroke-width: 1.4px;
 }
-#iranMap .map-pin-tail { fill: var(--brand-600); }
+#iranMap .map-pin-tail { fill: var(--danger-500); }
 #iranMap .map-pin-count {
   font-family: var(--font-fa);
   font-weight: 800;
