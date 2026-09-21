@@ -89,12 +89,20 @@
     // Live counts from the backend (api/provinces.php) patch straight onto
     // the shared PROVINCES_DATA objects, so decorateMap/labels/tooltips —
     // all of which read p.count/p.hasRep off those same references — pick
-    // them up automatically. If the API isn't reachable yet (backend not
-    // deployed, offline, CORS misconfigured…) this quietly keeps whatever
-    // was already in provinces-data.js instead of breaking the map.
+    // them up automatically. The endpoint only returns a key for provinces
+    // that currently have at least one active representative (a province
+    // with zero just isn't in the object at all) — so once it *does*
+    // respond, every province gets patched, present-in-the-response or
+    // not (missing = 0), or a province whose last representative was
+    // removed/deactivated would keep showing its old static demo count
+    // forever, since "the key is simply absent" would never look like "go
+    // back to zero" otherwise. `null` (not `{}`) marks "API unreachable" —
+    // backend not deployed, offline, CORS misconfigured — so that case is
+    // told apart from "reachable and genuinely empty" and, only then,
+    // quietly keeps the static sample data instead of zeroing everything.
     var liveCounts = fetch("api/provinces.php")
-      .then(function (res) { return res.ok ? res.json() : {}; })
-      .catch(function () { return {}; });
+      .then(function (res) { return res.ok ? res.json() : null; })
+      .catch(function () { return null; });
 
     var svgMarkup = fetch("assets/svg/iran-map.svg")
       .then(function (res) { if (!res.ok) throw new Error("svg fetch failed"); return res.text(); });
@@ -102,13 +110,14 @@
     Promise.all([svgMarkup, liveCounts])
       .then(function (results) {
         var svgText = results[0];
-        var counts = results[1] || {};
-        window.PROVINCES_DATA.forEach(function (p) {
-          if (Object.prototype.hasOwnProperty.call(counts, p.slug)) {
-            p.count = counts[p.slug];
-            p.hasRep = counts[p.slug] > 0;
-          }
-        });
+        var counts = results[1];
+        if (counts) {
+          window.PROVINCES_DATA.forEach(function (p) {
+            var c = Object.prototype.hasOwnProperty.call(counts, p.slug) ? counts[p.slug] : 0;
+            p.count = c;
+            p.hasRep = c > 0;
+          });
+        }
         mount.innerHTML = svgText;
         decorateMap(mount, dataById, tooltip, wrap);
       })
