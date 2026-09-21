@@ -264,12 +264,15 @@ input, select, textarea { font: inherit; color: inherit; }
   opacity: .55;
 }
 
+/* عنوان و توضیحات در یک ردیف بالا (وسط‌چین)، نقشه در ردیف بعدی با عرض کامل
+   و بزرگ‌تر — به‌جای چیدمان قبلیِ نصف‌نصفِ متن/نقشه کنار هم. */
 .hero .container {
-  display: flex; flex-direction: row; align-items: center; gap: var(--sp-16);
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-12);
 }
-/* در جهت راست‌چین، اولین آیتم DOM سمت راست قرار می‌گیرد */
-.hero-copy { flex: 1 1 480px; min-width: 0; }
-.hero-map-wrap { flex: 1 1 480px; min-width: 0; }
+.hero-copy { flex: none; width: 100%; max-width: 62ch; text-align: center; }
+.hero-map-wrap { flex: none; width: 100%; min-width: 0; }
+.hero-actions, .hero-stats { justify-content: center; }
+.hero-lead { margin-inline: auto; }
 
 .hero-title {
   font-size: clamp(2.1rem, 1.3rem + 3vw, var(--fs-4xl));
@@ -295,7 +298,8 @@ input, select, textarea { font: inherit; color: inherit; }
 /* --- Map card --- */
 .map-card {
   position: relative; background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--radius-lg); padding: var(--sp-6); box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-lg); padding: var(--sp-8); box-shadow: var(--shadow-lg);
+  width: 100%;
 }
 .map-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--sp-4); gap: var(--sp-3); }
 .map-card-head h2 { font-size: var(--fs-md); font-weight: 700; color: var(--ink-900); }
@@ -345,6 +349,28 @@ input, select, textarea { font: inherit; color: inherit; }
   text-anchor: middle;
   dominant-baseline: central;
   pointer-events: none;
+  user-select: none;
+}
+
+/* Numbered "pin" markers — one per province with an active representative,
+   showing its count at a glance (see addProvinceMarkers in main.js). Sits
+   above the name label, both drawn as a group so the load-in bounce
+   animation scales from the pin's tip (its "planted" point on the map). */
+#iranMap .map-pins { pointer-events: none; }
+#iranMap .map-pin { transform-box: fill-box; transform-origin: center; }
+#iranMap .map-pin-head {
+  fill: var(--brand-600);
+  stroke: #fff;
+  stroke-width: 1.4px;
+}
+#iranMap .map-pin-tail { fill: var(--brand-600); }
+#iranMap .map-pin-count {
+  font-family: var(--font-fa);
+  font-weight: 800;
+  fill: #fff;
+  text-anchor: middle;
+  dominant-baseline: central;
+  font-variant-numeric: tabular-nums;
   user-select: none;
 }
 
@@ -757,12 +783,8 @@ input, select, textarea { font: inherit; color: inherit; }
   .nav-toggle { display: inline-flex; }
   .header-cta .btn span { display: none; }
 
-  .hero .container { flex-direction: column; }
-  .hero-copy, .hero-map-wrap { flex: 1 1 auto; width: 100%; }
-  .hero-title, .hero-lead, .hero-actions, .hero-stats { text-align: center; }
-  .hero-lead { margin-inline: auto; }
-  .hero-actions { justify-content: center; }
-  .hero-stats { justify-content: center; }
+  /* چیدمان ستون/وسط‌چین هیرو دیگر اینجا نیست — از این پس پیش‌فرض همه‌ی
+     اندازه‌هاست (نقشه در ردیف کامل، متن بالای آن)، نه فقط موبایل. */
 
   .process-list { grid-template-columns: 1fr 1fr; }
   .process-list::before { display: none; }

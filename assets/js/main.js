@@ -259,7 +259,7 @@
       hideTooltip(tooltip);
     });
 
-    var labels = addProvinceLabels(svg, window.PROVINCES_DATA || []);
+    var markers = addProvinceMarkers(svg, window.PROVINCES_DATA || []);
 
     // Cinematic "draw the borders" entrance
     if (hasGsap && !reduceMotion) {
@@ -278,35 +278,66 @@
         delay: 0.3,
       });
       window.gsap.from(paths, { opacity: 0, duration: 1.1, stagger: 0.01, ease: "power1.out", delay: 0.3 });
-      if (labels.length) {
-        window.gsap.from(labels, { opacity: 0, duration: 0.8, stagger: 0.01, ease: "power1.out", delay: 1.0 });
+      if (markers.labels.length) {
+        window.gsap.from(markers.labels, { opacity: 0, duration: 0.8, stagger: 0.01, ease: "power1.out", delay: 1.0 });
+      }
+      // Pins "drop in" with a little overshoot after the labels — reads like
+      // they're being placed on the map one by one, not just appearing.
+      if (markers.pins.length) {
+        window.gsap.from(markers.pins, {
+          opacity: 0, scale: 0, duration: 0.55, stagger: 0.018,
+          ease: "back.out(2.2)", transformOrigin: "50% 100%", delay: 1.25,
+        });
       }
     }
   }
 
   /**
-   * Draws the Persian province name on top of each shape, anchored at the
-   * precomputed `cx/cy` ("pole of inaccessibility" — the point inside the
-   * polygon farthest from any border, see provinces-data.js) rather than a
-   * bounding-box center, which for thin/concave provinces (Tehran, Semnan,
-   * Gilan…) can land outside the shape entirely. Font size scales with `r`
-   * (that point's distance to the nearest edge) so small provinces get
-   * small labels instead of overflowing their neighbors. Long two-word-plus
-   * names ("چهارمحال و بختیاری") wrap onto a second line.
+   * Draws, per province: the Persian name (as before) and — new — a small
+   * numbered map pin showing its active representative count, so the count
+   * is visible at a glance without having to open every tooltip.
+   *
+   * Both are anchored at the precomputed `cx/cy` ("pole of inaccessibility"
+   * — the point inside the polygon farthest from any border, see
+   * provinces-data.js) rather than a bounding-box center, which for
+   * thin/concave provinces (Tehran, Semnan, Gilan…) can land outside the
+   * shape entirely. Sizes scale with `r` (that point's distance to the
+   * nearest edge) so small provinces get small markers instead of
+   * overflowing their neighbors. The pin and the name are stacked as one
+   * vertically-centered block around `cy` — pin on top, name below — rather
+   * than both sitting on `cy` and colliding. Provinces with no active
+   * representative skip the pin entirely (the muted fill + tooltip already
+   * cover that case) and keep the name centered exactly as before.
    */
-  function addProvinceLabels(svg, provincesData) {
+  function addProvinceMarkers(svg, provincesData) {
     var NS = "http://www.w3.org/2000/svg";
-    var group = document.createElementNS(NS, "g");
-    group.setAttribute("class", "map-labels");
-    group.setAttribute("aria-hidden", "true"); // paths already carry the accessible name
+    var labelGroup = document.createElementNS(NS, "g");
+    labelGroup.setAttribute("class", "map-labels");
+    labelGroup.setAttribute("aria-hidden", "true"); // paths already carry the accessible name
+    var pinGroup = document.createElementNS(NS, "g");
+    pinGroup.setAttribute("class", "map-pins");
+    pinGroup.setAttribute("aria-hidden", "true"); // decorative echo of the tooltip's own count
 
-    var nodes = [];
+    var labelNodes = [];
+    var pinNodes = [];
+
     provincesData.forEach(function (info) {
       if (typeof info.cx !== "number" || typeof info.cy !== "number") return;
       var lines = splitProvinceLabel(info.fa);
       var size = Math.max(7, Math.min(13, info.r * 0.6));
       var lineH = size * 1.15;
-      var startY = info.cy - ((lines.length - 1) * lineH) / 2;
+      var showPin = !!info.hasRep && info.count > 0;
+
+      // Pin radius scales with the same `r` budget as the label; clamped so
+      // it never dwarfs a small province or disappears on a huge one.
+      var pinR = Math.max(5, Math.min(9, info.r * 0.22));
+      var pinGap = showPin ? pinR * 0.55 : 0;
+      var blockH = (showPin ? pinR * 2 + pinGap : 0) + lines.length * lineH;
+      var blockTop = info.cy - blockH / 2;
+
+      var startY = showPin
+        ? blockTop + pinR * 2 + pinGap + size * 0.85
+        : info.cy - ((lines.length - 1) * lineH) / 2;
 
       var text = document.createElementNS(NS, "text");
       text.setAttribute("class", "map-label");
@@ -320,12 +351,47 @@
         text.appendChild(tspan);
       });
 
-      group.appendChild(text);
-      nodes.push(text);
+      labelGroup.appendChild(text);
+      labelNodes.push(text);
+
+      if (showPin) {
+        var pinCy = blockTop + pinR;
+        var pin = document.createElementNS(NS, "g");
+        pin.setAttribute("class", "map-pin");
+
+        var tail = document.createElementNS(NS, "path");
+        tail.setAttribute(
+          "d",
+          "M" + (info.cx - pinR * 0.42).toFixed(2) + " " + (pinCy + pinR * 0.78).toFixed(2) +
+          " L" + (info.cx + pinR * 0.42).toFixed(2) + " " + (pinCy + pinR * 0.78).toFixed(2) +
+          " L" + info.cx.toFixed(2) + " " + (pinCy + pinR * 1.55).toFixed(2) + " Z"
+        );
+        tail.setAttribute("class", "map-pin-tail");
+        pin.appendChild(tail);
+
+        var circle = document.createElementNS(NS, "circle");
+        circle.setAttribute("class", "map-pin-head");
+        circle.setAttribute("cx", info.cx);
+        circle.setAttribute("cy", pinCy.toFixed(2));
+        circle.setAttribute("r", pinR.toFixed(2));
+        pin.appendChild(circle);
+
+        var count = document.createElementNS(NS, "text");
+        count.setAttribute("class", "map-pin-count");
+        count.setAttribute("x", info.cx);
+        count.setAttribute("y", pinCy.toFixed(2));
+        count.setAttribute("font-size", (pinR * 1.05).toFixed(2));
+        count.textContent = String(info.count);
+        pin.appendChild(count);
+
+        pinGroup.appendChild(pin);
+        pinNodes.push(pin);
+      }
     });
 
-    svg.appendChild(group); // painted last => sits above the province fills
-    return nodes;
+    svg.appendChild(labelGroup);
+    svg.appendChild(pinGroup); // painted last => pins float above names and fills
+    return { labels: labelNodes, pins: pinNodes };
   }
 
   function splitProvinceLabel(name) {
