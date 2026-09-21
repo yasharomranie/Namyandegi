@@ -322,13 +322,25 @@ input, select, textarea { font: inherit; color: inherit; }
   /* Skip the double-tap-to-zoom delay so a tap's pointerup fires promptly;
      panning/scrolling through the map is still allowed (unlike touch-action: none). */
   touch-action: manipulation;
-  transition: fill var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
-  transform-box: fill-box; transform-origin: center;
+  transition: fill var(--dur-fast) var(--ease-out), filter var(--dur-fast) var(--ease-out);
 }
 #iranMap path[data-has-rep="true"] { fill: var(--brand-400); }
+/* No transform/scale here on purpose: scaling a path on :hover moves its own
+   rendered edges, which — for a shape whose boundary sits close to the
+   cursor after scaling around its fill-box center (true for most of these
+   irregular province outlines) — can push that exact pixel back outside the
+   shape, dropping :hover, un-scaling, and re-entering it again: an infinite
+   hover/leave flicker with the mouse perfectly still, which reads as "the
+   tooltip doesn't work" on desktop. drop-shadow is a purely visual filter —
+   it never changes hit-testing — so it gives the same "lifted" feedback
+   with zero risk of feeding back into :hover. */
 #iranMap path:hover,
 #iranMap path:focus-visible,
-#iranMap path.is-active { fill: var(--brand-600); transform: scale(1.015); outline: none; }
+#iranMap path.is-active {
+  fill: var(--brand-600);
+  filter: drop-shadow(0 2px 5px rgba(17, 24, 39, .35));
+  outline: none;
+}
 #iranMap path[data-has-rep="false"]:hover,
 #iranMap path[data-has-rep="false"].is-active { fill: var(--accent-500); }
 

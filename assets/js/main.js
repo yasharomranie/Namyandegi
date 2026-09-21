@@ -129,6 +129,31 @@
     var paths = qsa("path", svg);
     var activeTooltipTarget = null;
 
+    // A mouse "leaving" the hovered province doesn't always mean the user
+    // wants the tooltip gone: (a) the tooltip pops up just above the shape,
+    // so the straight-line path from the province to its own "مشاهده
+    // نمایندگان" button crosses outside the path first — without this,
+    // pointerleave would hide the tooltip before the click ever lands; and
+    // (b) some province outlines are irregular enough that the browser's own
+    // hover hit-testing can flicker in/out by a sub-pixel with the cursor
+    // completely still (more likely while an unrelated infinite CSS
+    // animation elsewhere on the page — e.g. the trust-strip marquee — keeps
+    // it re-checking hover every frame). So a "leave" only schedules a hide
+    // a beat later, and re-entering the province OR the tooltip itself
+    // within that window cancels it — real leaves feel just as instant,
+    // flickers and button-reaching moves both survive.
+    var hideTimer = null;
+    function cancelHide() {
+      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
+    }
+    function scheduleHide(path) {
+      cancelHide();
+      hideTimer = setTimeout(function () {
+        hideTimer = null;
+        if (activeTooltipTarget === path) hideTooltip(tooltip, path);
+      }, 120);
+    }
+
     // Once a tooltip opens (over/near the just-tapped province), it visually
     // covers roughly the same spot — so a second tap aimed at "that same
     // spot" lands on the tooltip card itself, not the path underneath it.
@@ -152,6 +177,15 @@
     tooltip.addEventListener("click", function () {
       if (Date.now() < (tooltip._suppressClickUntil || 0)) return;
       if (tooltip._activate) tooltip._activate();
+    });
+    // Mouse moving from the province up onto the tooltip card itself (e.g.
+    // heading for the "مشاهده نمایندگان" button) must not let the scheduled
+    // hide above go through.
+    tooltip.addEventListener("pointerenter", function (e) {
+      if (e.pointerType === "mouse") cancelHide();
+    });
+    tooltip.addEventListener("pointerleave", function (e) {
+      if (e.pointerType === "mouse") scheduleHide(activeTooltipTarget);
     });
 
     paths.forEach(function (path) {
@@ -211,10 +245,10 @@
       //    "مشاهده نمایندگان استان" button (wired in showTooltip) is always
       //    a one-tap shortcut once it's visible, on any input type.
       path.addEventListener("pointerenter", function (e) {
-        if (e.pointerType === "mouse") open();
+        if (e.pointerType === "mouse") { cancelHide(); open(); }
       });
       path.addEventListener("pointerleave", function (e) {
-        if (e.pointerType === "mouse" && activeTooltipTarget === path) hideTooltip(tooltip, path);
+        if (e.pointerType === "mouse" && activeTooltipTarget === path) scheduleHide(path);
       });
       // Tapping/clicking a focusable element also focuses it, not just
       // keyboard Tab — so an unconditional "focus" listener would open()
