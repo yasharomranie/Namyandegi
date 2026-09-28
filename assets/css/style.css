@@ -720,6 +720,17 @@ input, select, textarea { font: inherit; color: inherit; }
   font-size: var(--fs-sm); min-height: 48px; transition: border-color var(--dur-fast), background-color var(--dur-fast);
 }
 .reps-search input:focus { outline: none; border-color: var(--brand-500); background: var(--surface); box-shadow: 0 0 0 4px var(--brand-50); }
+/* AJAX-in-flight indicator for a live search box (all-representatives.html)
+   — sits on the opposite side from the search icon so it never overlaps
+   typed text, and is purely visual (no layout shift when it appears). */
+.reps-search-spinner {
+  position: absolute; inset-inline-end: var(--sp-4); top: 50%; translate: 0 -50%;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--brand-100); border-top-color: var(--brand-600);
+  animation: reps-spin .7s linear infinite;
+}
+@keyframes reps-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .reps-search-spinner { animation: none; } }
 .reps-toolbar select {
   flex: 1 1 170px; border: 1.5px solid transparent; background: var(--surface-alt); border-radius: var(--radius-sm);
   padding: var(--sp-3) var(--sp-4); font-size: var(--fs-sm); min-height: 48px; color: var(--ink-800);
@@ -732,6 +743,18 @@ input, select, textarea { font: inherit; color: inherit; }
 .reps-results-bar p { color: var(--ink-600); font-size: var(--fs-sm); }
 .reps-results-bar b { color: var(--ink-950); font-variant-numeric: tabular-nums; }
 .reps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--sp-6); }
+
+/* Per-province sections on the "همه نمایندگان" directory
+   (all-representatives.html) — a heading followed by that province's own
+   .reps-grid, repeated once per province present in the current results. */
+.reps-group { margin-bottom: var(--sp-12); }
+.reps-group:last-child { margin-bottom: 0; }
+.reps-group-title {
+  display: flex; align-items: baseline; gap: var(--sp-3); flex-wrap: wrap;
+  margin-bottom: var(--sp-5); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--border);
+}
+.reps-group-name { font-size: var(--fs-lg); font-weight: 800; color: var(--ink-950); }
+.reps-group-count { font-size: var(--fs-sm); color: var(--ink-500); font-variant-numeric: tabular-nums; }
 
 .rep-card {
   background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);

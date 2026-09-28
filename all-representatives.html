@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>نمایندگان استان | برند شما</title>
-<meta name="description" content="فهرست نمایندگان فعال به تفکیک استان — جست‌وجو و تماس مستقیم.">
+<title>فهرست همه نمایندگان | برند شما</title>
+<meta name="description" content="فهرست کامل نمایندگان فعال ما به تفکیک استان — جست‌وجو بر اساس نام، استان یا شهر.">
 <meta name="theme-color" content="#fbfbfe">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,7 +34,7 @@
       <ul>
         <li><a href="index.html#hero">خانه</a></li>
         <li><a href="index.html#map">نقشه نمایندگی‌ها</a></li>
-        <li><a href="all-representatives.html">همه نمایندگان</a></li>
+        <li><a href="all-representatives.html" class="is-active">همه نمایندگان</a></li>
         <li><a href="index.html#benefits">چرا نماینده ما شوید</a></li>
         <li><a href="index.html#apply">ثبت‌نام نمایندگی</a></li>
         <li><a href="index.html#faq">سوالات متداول</a></li>
@@ -56,110 +56,105 @@
 <main id="main">
 
   <!-- =======================================================
-       بخش عنوان استان + آمار + جست‌وجو/فیلتر
+       عنوان + آمار + جست‌وجوی AJAX
   ======================================================= -->
   <section class="reps-hero">
     <div class="container">
       <nav class="breadcrumb" aria-label="مسیر صفحه">
         <a href="index.html#hero">خانه</a>
         <svg class="sep" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 5 7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <a href="index.html#map">نقشه نمایندگی‌ها</a>
-        <svg class="sep" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 5 7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="current" id="breadcrumbProvince">در حال بارگذاری…</span>
+        <span class="current">همه نمایندگان</span>
       </nav>
 
       <div class="reps-hero-top">
         <div class="reps-title-row">
           <span class="province-pin" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.6"/></svg>
           </span>
           <div class="reps-title">
-            <h1 id="provinceTitle">نمایندگان استان</h1>
-            <p id="provinceSubtitle">در حال بارگذاری اطلاعات…</p>
+            <h1>فهرست همه نمایندگان</h1>
+            <p id="allRepsSubtitle">در حال بارگذاری فهرست نمایندگان…</p>
           </div>
         </div>
 
-        <div class="reps-stats" id="repsStats" hidden>
+        <div class="reps-stats" id="allRepsStats" hidden>
           <div class="reps-stat-chip">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <div><b id="statCount">0</b><span>نماینده فعال</span></div>
+            <div><b id="allStatCount">0</b><span>نماینده فعال</span></div>
           </div>
           <div class="reps-stat-chip">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12Z" stroke="currentColor" stroke-width="1.6"/></svg>
-            <div><b id="statCity">—</b><span>شهر مرکز استان</span></div>
+            <div><b id="allStatProvinces">0</b><span>استان دارای نماینده</span></div>
           </div>
         </div>
       </div>
 
-      <div class="reps-toolbar" id="repsToolbar" hidden>
+      <div class="reps-toolbar">
         <label class="reps-search">
-          <span class="visually-hidden">جست‌وجو در نام نمایندگان</span>
+          <span class="visually-hidden">جست‌وجو در نام، استان یا شهر نمایندگان</span>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-          <input type="search" id="repsSearch" placeholder="جست‌وجو بر اساس نام یا شهر…" autocomplete="off">
+          <input type="search" id="allRepsSearch" placeholder="جست‌وجو بر اساس نام و نام‌خانوادگی، استان یا شهر…" autocomplete="off">
+          <span class="reps-search-spinner" id="allRepsSpinner" hidden aria-hidden="true"></span>
         </label>
-        <select id="repsCityFilter" aria-label="فیلتر بر اساس شهر">
-          <option value="">همه شهرها</option>
-        </select>
-        <select id="repsJobFilter" aria-label="فیلتر بر اساس رسته شغلی">
-          <option value="">همه رسته‌های شغلی</option>
-        </select>
       </div>
     </div>
   </section>
 
   <!-- =======================================================
-       فهرست نمایندگان
+       فهرست نمایندگان، به تفکیک استان
   ======================================================= -->
   <section class="section" style="padding-top:var(--sp-12)">
     <div class="container">
 
-      <div class="reps-results-bar" id="repsResultsBar" hidden>
-        <p><b id="resultsCount">0</b> نماینده یافت شد</p>
+      <div class="reps-results-bar" id="allRepsResultsBar" hidden>
+        <p><b id="allResultsCount">0</b> نماینده یافت شد</p>
       </div>
 
-      <div class="reps-grid" id="repsGrid"></div>
+      <!-- گروه‌های نتیجه (هر استان، تیتر + گرید کارت‌ها) با جاوااسکریپت اینجا ساخته می‌شوند -->
+      <div id="allRepsGroups"></div>
 
-      <!-- حالت "این استان هنوز نماینده ندارد" -->
-      <div class="reps-empty" id="repsEmptyState" hidden>
+      <!-- حالت بارگذاری اولیه -->
+      <div class="reps-empty" id="allRepsLoading">
+        <div class="reps-empty-icon">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v4l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <h2>در حال بارگذاری فهرست نمایندگان…</h2>
+      </div>
+
+      <!-- حالت "هنوز هیچ نماینده‌ای در کل کشور ثبت نشده" -->
+      <div class="reps-empty" id="allRepsEmptyState" hidden>
         <div class="reps-empty-icon">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm11 10v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-        <h2>هنوز نماینده‌ای در این استان نداریم</h2>
-        <p>این استان همین حالا برای پذیرش نمایندگی باز است. اگر در این منطقه فعالیت می‌کنید، می‌توانید اولین نماینده رسمی این استان باشید.</p>
+        <h2>هنوز هیچ نماینده‌ای ثبت نشده</h2>
+        <p>به محض تأیید اولین درخواست نمایندگی از پنل مدیریت، نام و اطلاعات نماینده‌ها همین‌جا نمایش داده می‌شود.</p>
         <div class="btn-row">
           <a href="index.html#apply" class="btn btn-primary btn-lg">
-            <span>اولین نماینده این استان شوید</span>
+            <span>ثبت‌نام به‌عنوان نماینده</span>
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5l7 7-7 7M21 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </a>
-          <a href="index.html#map" class="btn btn-ghost btn-lg">بازگشت به نقشه</a>
         </div>
       </div>
 
-      <!-- حالت "نتیجه‌ای برای این جست‌وجو/فیلتر پیدا نشد" -->
-      <div class="reps-empty" id="repsNoMatchState" hidden>
+      <!-- حالت "نتیجه‌ای برای این جست‌وجو پیدا نشد" -->
+      <div class="reps-empty" id="allRepsNoMatchState" hidden>
         <div class="reps-empty-icon">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
         </div>
         <h2>نتیجه‌ای پیدا نشد</h2>
-        <p>هیچ نماینده‌ای با این مشخصات در این استان ثبت نشده. عبارت جست‌وجو یا فیلترها را تغییر دهید.</p>
+        <p>هیچ نماینده‌ای با این نام، استان یا شهر پیدا نشد. عبارت جست‌وجو را تغییر دهید.</p>
         <div class="btn-row">
-          <button type="button" class="btn btn-ghost" id="clearFiltersBtn">پاک‌کردن فیلترها</button>
+          <button type="button" class="btn btn-ghost" id="allClearSearchBtn">پاک‌کردن جست‌وجو</button>
         </div>
       </div>
 
-      <!-- استان نامعتبر/نامشخص در آدرس -->
-      <div class="reps-empty" id="repsInvalidState" hidden>
+      <!-- حالت خطا در ارتباط با سرور -->
+      <div class="reps-empty" id="allRepsErrorState" hidden>
         <div class="reps-empty-icon">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 8v5m0 3h.01M12 2 2 20h20L12 2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </div>
-        <h2>استانی انتخاب نشده</h2>
-        <p>برای مشاهده فهرست نمایندگان، ابتدا از نقشه یک استان را انتخاب کنید.</p>
-        <div class="btn-row">
-          <a href="index.html#map" class="btn btn-primary btn-lg">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 20l-5.447-2.724A1 1 0 0 1 3 16.382V5.618a1 1 0 0 1 1.447-.894L9 7m0 13 6-3m-6 3V7m6 10 4.553 2.276A1 1 0 0 0 21 18.382V7.618a1 1 0 0 0-.553-.894L15 4m0 13V4m0 0L9 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span>رفتن به نقشه نمایندگی‌ها</span>
-          </a>
-        </div>
+        <h2>در حال حاضر امکان بارگذاری فهرست نیست</h2>
+        <p>اتصال به سرور برقرار نشد. لطفاً چند لحظه دیگر دوباره تلاش کنید.</p>
       </div>
 
     </div>
@@ -171,8 +166,8 @@
   <section class="section section-alt">
     <div class="container">
       <div class="cta-banner">
-        <h2>نماینده این استان نیستید؟</h2>
-        <p>اگر در این منطقه فعالیت اقتصادی دارید، همین امروز برای اخذ نمایندگی رسمی درخواست دهید.</p>
+        <h2>هنوز نماینده ما نیستید؟</h2>
+        <p>اگر در هر یک از استان‌های کشور فعالیت اقتصادی دارید، همین امروز برای اخذ نمایندگی رسمی درخواست دهید.</p>
         <a href="index.html#apply" class="btn btn-primary btn-lg">
           <span>ثبت‌نام به‌عنوان نماینده</span>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 5l7 7-7 7M21 12H3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -216,7 +211,6 @@
           <li><a href="index.html#map">نقشه نمایندگی‌ها</a></li>
           <li><a href="all-representatives.html">همه نمایندگان</a></li>
           <li><a href="index.html#benefits">چرا نماینده ما شوید</a></li>
-          <li><a href="index.html#process">مراحل همکاری</a></li>
         </ul>
       </div>
 
@@ -257,6 +251,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="assets/js/provinces-data.js?v=1.7"></script>
 <script src="assets/js/representatives-data.js?v=1.7"></script>
-<script src="assets/js/representatives.js?v=1.7"></script>
+<script src="assets/js/all-representatives.js?v=1.7"></script>
 </body>
 </html>

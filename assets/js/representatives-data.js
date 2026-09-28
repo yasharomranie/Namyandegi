@@ -107,4 +107,10 @@
     }
     return list;
   }
+
+  // Exposed so assets/js/all-representatives.js can build the same kind of
+  // fallback list across *every* province (not just one) when
+  // api/all-representatives.php isn't reachable — same reasoning as
+  // window.fetchRepresentatives above, just for the "همه نمایندگان" page.
+  window.generateSampleRepresentatives = generateSampleRepresentatives;
 })();
